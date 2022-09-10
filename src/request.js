@@ -23,17 +23,20 @@ api.interceptors.response.use(
             refresh_token: process.env.REFRESH_TOKEN,
           });
 
-          const { token } = response.data;
-
-          tokenCache = `Bearer ${token}`;
+          tokenCache = `Bearer ${response.data.token}`;
           api.defaults.headers.common.Authorization = tokenCache;
 
-          const refreshRequest = await axios({
+          const refreshRequest = error.config.data
+            ? JSON.parse(error.config.data)
+            : null;
+
+          const refreshResponse = await axios({
             ...error.config,
+            data: refreshRequest,
             headers: { Authorization: tokenCache },
           });
 
-          resolve(refreshRequest);
+          resolve(refreshResponse);
         } catch {
           reject(error);
         }
@@ -44,22 +47,44 @@ api.interceptors.response.use(
   },
 );
 
-async function run() {
+async function requestAuth() {
   try {
     const responseWithoutToken = await api.get('/auth');
     console.log(
       'Authentication without valid token and with valid refresh token:',
-      responseWithoutToken.data.message,
+      responseWithoutToken.data,
     );
 
     const responseWithToken = await api.get('/auth');
-    console.log(
-      'Authentication with valid token:',
-      responseWithToken.data.message,
-    );
+    console.log('Authentication with valid token:', responseWithToken.data);
   } catch (err) {
     console.log(err.response.data.message);
   }
 }
 
-run();
+async function requestTODO() {
+  try {
+    const responseWithoutToken = await api.post('/todo', { task: 'teste 1' });
+    console.log(
+      'Create TODO without valid token and with valid refresh token:',
+      responseWithoutToken.data,
+    );
+
+    const responseWithToken = await api.post('/todo', { task: 'teste 2' });
+    console.log('Create TODO with valid token:', responseWithToken.data);
+  } catch (err) {
+    console.log(err.response.data.message);
+  }
+}
+
+async function main() {
+  tokenCache = '';
+  api.defaults.headers.common.Authorization = tokenCache;
+  await requestAuth();
+
+  tokenCache = '';
+  api.defaults.headers.common.Authorization = tokenCache;
+  await requestTODO();
+}
+
+main();

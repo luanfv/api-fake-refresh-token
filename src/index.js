@@ -26,6 +26,28 @@ app.get('/auth', (req, res) => {
   }
 });
 
+app.post('/todo', (req, res) => {
+  try {
+    const authorization = req.headers.authorization;
+    const token = authorization.split(' ')[1];
+
+    if (token !== process.env.TOKEN) {
+      throw new Error();
+    }
+
+    const { task } = req.body;
+
+    res.json({
+      id: new Date().getTime(),
+      task,
+    });
+  } catch {
+    res.status(401).json({
+      message: 'unauthorized',
+    });
+  }
+});
+
 app.post('/refresh-token', (req, res) => {
   try {
     const { refresh_token } = req.body;
