@@ -9,7 +9,8 @@ app.use(json());
 
 app.get('/auth', (req, res) => {
   try {
-    const token = req.headers.authorization;
+    const authorization = req.headers.authorization;
+    const token = authorization.split(' ')[1];
 
     if (token !== process.env.TOKEN) {
       throw new Error();
