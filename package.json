@@ -4,7 +4,8 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "dev": "nodemon --exec sucrase-node ./src/index.js"
+    "dev": "nodemon --exec sucrase-node ./src/index.js",
+    "request": "sucrase-node ./src/request.js"
   },
   "author": "luanfv",
   "license": "ISC",
