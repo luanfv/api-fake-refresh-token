@@ -12,17 +12,15 @@ app.get('/auth', (req, res) => {
     const token = req.headers.authorization;
 
     if (token !== process.env.TOKEN) {
-      res.status(404).json({
-        message: 'token not exists',
-      });
+      throw new Error();
     }
 
     res.json({
-      message: 'success',
+      message: 'AUTH success',
     });
   } catch {
-    res.status(400).json({
-      message: 'failure',
+    res.status(401).json({
+      message: 'AUTH failure',
     });
   }
 });
@@ -32,17 +30,15 @@ app.post('/refresh-token', (req, res) => {
     const { refresh_token } = req.body;
 
     if (refresh_token !== process.env.REFRESH_TOKEN) {
-      res.status(404).json({
-        message: 'refresh token not exists',
-      });
+      throw new Error();
     }
 
     res.json({
       token: process.env.TOKEN,
     });
   } catch {
-    res.status(400).json({
-      message: 'failure',
+    res.status(401).json({
+      message: 'REFRESH TOKEN failure',
     });
   }
 });
