@@ -9,20 +9,41 @@ app.use(json());
 
 app.get('/auth', (req, res) => {
   try {
-    const token = req.headers.authorization;
+    const authorization = req.headers.authorization;
+    const token = authorization.split(' ')[1];
 
     if (token !== process.env.TOKEN) {
-      res.status(404).json({
-        message: 'token not exists',
-      });
+      throw new Error();
     }
 
     res.json({
-      message: 'success',
+      message: 'authorized',
     });
   } catch {
-    res.status(400).json({
-      message: 'failure',
+    res.status(401).json({
+      message: 'unauthorized',
+    });
+  }
+});
+
+app.post('/todo', (req, res) => {
+  try {
+    const authorization = req.headers.authorization;
+    const token = authorization.split(' ')[1];
+
+    if (token !== process.env.TOKEN) {
+      throw new Error();
+    }
+
+    const { task } = req.body;
+
+    res.json({
+      id: new Date().getTime(),
+      task,
+    });
+  } catch {
+    res.status(401).json({
+      message: 'unauthorized',
     });
   }
 });
@@ -32,17 +53,15 @@ app.post('/refresh-token', (req, res) => {
     const { refresh_token } = req.body;
 
     if (refresh_token !== process.env.REFRESH_TOKEN) {
-      res.status(404).json({
-        message: 'refresh token not exists',
-      });
+      throw new Error();
     }
 
     res.json({
       token: process.env.TOKEN,
     });
   } catch {
-    res.status(400).json({
-      message: 'failure',
+    res.status(404).json({
+      message: 'refresh token does not exist',
     });
   }
 });
