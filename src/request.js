@@ -49,13 +49,16 @@ async function run() {
     const responseWithoutToken = await api.get('/auth');
     console.log(
       'Authentication without valid token and with valid refresh token:',
-      responseWithoutToken.data
+      responseWithoutToken.data.message
     );
 
     const responseWithToken = await api.get('/auth');
-    console.log('Authentication with valid token:', responseWithToken.data);
+    console.log(
+      'Authentication with valid token:',
+      responseWithToken.data.message
+    );
   } catch (err) {
-    console.log('ERROR:', err);
+    console.log(err.response.data.message);
   }
 }
 

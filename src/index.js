@@ -16,11 +16,11 @@ app.get('/auth', (req, res) => {
     }
 
     res.json({
-      message: 'AUTH success',
+      message: 'authorized',
     });
   } catch {
     res.status(401).json({
-      message: 'AUTH failure',
+      message: 'unauthorized',
     });
   }
 });
@@ -37,8 +37,8 @@ app.post('/refresh-token', (req, res) => {
       token: process.env.TOKEN,
     });
   } catch {
-    res.status(401).json({
-      message: 'REFRESH TOKEN failure',
+    res.status(404).json({
+      message: 'refresh token does not exist',
     });
   }
 });
