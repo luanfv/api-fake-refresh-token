@@ -1,51 +1,4 @@
-import 'dotenv/config';
-
-import axios from 'axios';
-
-let tokenCache = '';
-
-const api = axios.create({
-  baseURL: `${process.env.BASE_URL}:${process.env.PORT}`,
-});
-
-api.defaults.headers.common.Authorization = tokenCache;
-
-api.interceptors.response.use(
-  function (response) {
-    return response;
-  },
-  function (error) {
-    // eslint-disable-next-line no-async-promise-executor
-    return new Promise(async (resolve, reject) => {
-      if (error.response.status === 401) {
-        try {
-          const response = await api.post('/refresh-token', {
-            refresh_token: process.env.REFRESH_TOKEN,
-          });
-
-          tokenCache = `Bearer ${response.data.token}`;
-          api.defaults.headers.common.Authorization = tokenCache;
-
-          const refreshRequest = error.config.data
-            ? JSON.parse(error.config.data)
-            : null;
-
-          const refreshResponse = await axios({
-            ...error.config,
-            data: refreshRequest,
-            headers: { Authorization: tokenCache },
-          });
-
-          resolve(refreshResponse);
-        } catch {
-          reject(error);
-        }
-      }
-
-      reject(error);
-    });
-  },
-);
+import { api } from './api';
 
 async function requestAuth() {
   try {
@@ -78,12 +31,10 @@ async function requestTODO() {
 }
 
 async function main() {
-  tokenCache = '';
-  api.defaults.headers.common.Authorization = tokenCache;
+  api.defaults.headers.common.Authorization = '';
   await requestAuth();
 
-  tokenCache = '';
-  api.defaults.headers.common.Authorization = tokenCache;
+  api.defaults.headers.common.Authorization = '';
   await requestTODO();
 }
 
