@@ -7,7 +7,6 @@ const storageRefreshToken = {
 };
 
 const storageToken = {
-  get: () => {},
   set: (value) => {
     console.log(`UPDATE STORAGE TOKEN:`, value);
   },

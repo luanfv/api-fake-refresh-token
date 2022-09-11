@@ -7,7 +7,7 @@ const app = express();
 
 app.use(json());
 
-app.get('/auth', (req, res) => {
+app.get(process.env.ROUTE_GET_AUTH, (req, res) => {
   try {
     const authorization = req.headers.authorization;
     const token = authorization.split(' ')[1];
@@ -26,7 +26,7 @@ app.get('/auth', (req, res) => {
   }
 });
 
-app.post('/todo', (req, res) => {
+app.post(process.env.ROUTE_POST_TODO, (req, res) => {
   try {
     const authorization = req.headers.authorization;
     const token = authorization.split(' ')[1];
@@ -48,7 +48,7 @@ app.post('/todo', (req, res) => {
   }
 });
 
-app.post('/refresh-token', (req, res) => {
+app.post(process.env.ROUTE_POST_REFRESH_TOKEN, (req, res) => {
   try {
     const { refresh_token } = req.body;
 

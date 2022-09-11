@@ -19,9 +19,12 @@ api.interceptors.response.use(
 
         if (refreshToken) {
           try {
-            const refreshTokenResponse = await api.post('/refresh-token', {
-              refresh_token: refreshToken,
-            });
+            const refreshTokenResponse = await api.post(
+              process.env.ROUTE_POST_REFRESH_TOKEN,
+              {
+                refresh_token: refreshToken,
+              },
+            );
 
             const token = `Bearer ${refreshTokenResponse.data.token}`;
 
