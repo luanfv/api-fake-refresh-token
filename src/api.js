@@ -1,6 +1,7 @@
 import 'dotenv/config';
 
 import axios from 'axios';
+import { storageRefreshToken, storageToken } from './storage';
 
 const api = axios.create({
   baseURL: `${process.env.BASE_URL}:${process.env.PORT}`,
@@ -14,28 +15,33 @@ api.interceptors.response.use(
     // eslint-disable-next-line no-async-promise-executor
     return new Promise(async (resolve, reject) => {
       if (error.response.status === 401) {
-        try {
-          const response = await api.post('/refresh-token', {
-            refresh_token: process.env.REFRESH_TOKEN,
-          });
+        const refreshToken = storageRefreshToken.get();
 
-          const token = `Bearer ${response.data.token}`;
-          api.defaults.headers.common.Authorization = token;
-          // SAVE TOKEN IN CACHE
+        if (refreshToken) {
+          try {
+            const refreshTokenResponse = await api.post('/refresh-token', {
+              refresh_token: refreshToken,
+            });
 
-          const refreshRequest = error.config.data
-            ? JSON.parse(error.config.data)
-            : null;
+            const token = `Bearer ${refreshTokenResponse.data.token}`;
 
-          const refreshResponse = await axios({
-            ...error.config,
-            data: refreshRequest,
-            headers: { Authorization: token },
-          });
+            const refreshRequest = error.config.data
+              ? JSON.parse(error.config.data)
+              : null;
 
-          resolve(refreshResponse);
-        } catch {
-          reject(error);
+            const refreshResponse = await axios({
+              ...error.config,
+              data: refreshRequest,
+              headers: { Authorization: token },
+            });
+
+            setApiToken(token);
+            resolve(refreshResponse);
+          } catch (err) {
+            if (err.response.status === 401) {
+              setApiToken(null);
+            }
+          }
         }
       }
 
@@ -44,4 +50,9 @@ api.interceptors.response.use(
   },
 );
 
-export { api };
+function setApiToken(value) {
+  api.defaults.headers.common.Authorization = value;
+  storageToken.set(value);
+}
+
+export { api, setApiToken };

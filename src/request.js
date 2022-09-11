@@ -1,4 +1,4 @@
-import { api } from './api';
+import { api, setApiToken } from './api';
 
 async function requestAuth() {
   try {
@@ -31,10 +31,10 @@ async function requestTODO() {
 }
 
 async function main() {
-  api.defaults.headers.common.Authorization = '';
+  setApiToken(null);
   await requestAuth();
 
-  api.defaults.headers.common.Authorization = '';
+  setApiToken(null);
   await requestTODO();
 }
 
