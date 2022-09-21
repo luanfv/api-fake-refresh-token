@@ -1,6 +1,11 @@
+import axios from 'axios';
+import MockAdapter from 'axios-mock-adapter';
+
 import { api } from './api';
+import { storageRefreshToken } from './storage';
 
 jest.mock('./api');
+jest.mock('./storage');
 
 describe('when requesting the API with Axios', () => {
   describe('when the token has not expired', () => {
@@ -38,8 +43,6 @@ describe('when requesting the API with Axios', () => {
     describe('when making a POST request', () => {
       beforeAll(async () => {
         api.post.mockImplementation((route, body) => {
-          console.log(route, body);
-
           if (route === '/todo') {
             if (body && body.task) {
               return Promise.resolve({
@@ -78,7 +81,60 @@ describe('when requesting the API with Axios', () => {
     });
   });
 
-  describe('when the token expires but has a valid refresh token', () => {});
+  describe('when the token expires but has a valid refresh token', () => {
+    describe('when making a GET request', () => {
+      const mockApi = new MockAdapter(api);
+      const mockAxios = new MockAdapter(axios);
+
+      beforeAll(async () => {
+        storageRefreshToken.get.mockImplementation(() => 'abcd');
+
+        const expectedRefreshToken = storageRefreshToken.get();
+        const expectedToken = 'Bearer 123456';
+
+        mockApi.onGet('/auth').reply(401);
+
+        mockApi.onPost('/refresh-token').reply((config) => {
+          return new Promise((resolve) => {
+            const responseRefreshToken = JSON.parse(config.data).refresh_token;
+
+            if (responseRefreshToken === expectedRefreshToken) {
+              resolve([200, { token: '123456' }]);
+            }
+
+            resolve(400);
+          });
+        });
+
+        mockAxios.onGet('/auth').reply((config) => {
+          return new Promise((resolve) => {
+            if (expectedToken === config.headers.Authorization) {
+              resolve([200, { message: 'authorized' }]);
+            }
+
+            resolve(401);
+          });
+        });
+      });
+
+      afterAll(() => {
+        mockApi.restore();
+        mockAxios.restore();
+      });
+
+      it('should return status 200', async () => {
+        const response = await api.get('/auth');
+
+        expect(response.status).toEqual(200);
+      });
+
+      it('should return message authorized', async () => {
+        const response = await api.get('/auth');
+
+        expect(response.data.message).toEqual('authorized');
+      });
+    });
+  });
 
   describe("when the token expires but doesn't have a valid refresh token", () => {});
 });

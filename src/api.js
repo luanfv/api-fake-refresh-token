@@ -14,7 +14,7 @@ api.interceptors.response.use(
   function (error) {
     // eslint-disable-next-line no-async-promise-executor
     return new Promise(async (resolve, reject) => {
-      if (error.response.status === 401) {
+      if (error.response && error.response.status === 401) {
         const refreshToken = storageRefreshToken.get();
 
         if (refreshToken) {
