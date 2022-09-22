@@ -6,7 +6,7 @@ import { storageRefreshToken } from './storage';
 
 jest.mock('./storage');
 
-describe('when requesting the API with Axios', () => {
+describe('when requesting with Axios', () => {
   const mockApi = new MockAdapter(api);
   const mockAxios = new MockAdapter(axios);
 
@@ -15,7 +15,7 @@ describe('when requesting the API with Axios', () => {
     mockAxios.restore();
   });
 
-  describe('when the token has not expired', () => {
+  describe('when the token is valid', () => {
     beforeAll(() => {
       const expectedToken = 'Bearer 123456';
 
@@ -101,113 +101,121 @@ describe('when requesting the API with Axios', () => {
     });
   });
 
-  describe('when the token expires but has a valid refresh token', () => {
-    beforeAll(() => {
-      storageRefreshToken.get.mockImplementation(() => 'abcd');
+  describe('when the token expires or is invalid', () => {
+    describe('when has a valid refresh token', () => {
+      describe('when the refresh request is successful', () => {
+        beforeAll(() => {
+          storageRefreshToken.get.mockImplementation(() => 'abcd');
 
-      const expectedRefreshToken = storageRefreshToken.get();
-      const expectedToken = 'Bearer 123456';
+          const expectedRefreshToken = storageRefreshToken.get();
+          const expectedToken = 'Bearer 123456';
 
-      mockApi.onPost('/refresh-token').reply((config) => {
-        return new Promise((resolve) => {
-          const responseRefreshToken = JSON.parse(config.data).refresh_token;
+          mockApi.onPost('/refresh-token').reply((config) => {
+            return new Promise((resolve) => {
+              const responseRefreshToken = JSON.parse(
+                config.data,
+              ).refresh_token;
 
-          if (responseRefreshToken === expectedRefreshToken) {
-            resolve([200, { token: '123456' }]);
-          }
+              if (responseRefreshToken === expectedRefreshToken) {
+                resolve([200, { token: '123456' }]);
+              }
 
-          resolve([400]);
+              resolve([400]);
+            });
+          });
+
+          mockApi.onGet('/auth').reply(401);
+
+          mockApi.onPost('/todo').reply((config) => {
+            return new Promise((resolve) => {
+              if (expectedToken === config.headers.Authorization) {
+                const body = JSON.parse(config.data);
+
+                if (body && body.task) {
+                  resolve([
+                    201,
+                    {
+                      id: 1,
+                      task: body.task,
+                    },
+                  ]);
+                }
+              }
+
+              resolve([401]);
+            });
+          });
+
+          mockAxios.onGet('/auth').reply((config) => {
+            return new Promise((resolve) => {
+              if (expectedToken === config.headers.Authorization) {
+                resolve([200, { message: 'authorized' }]);
+              }
+
+              resolve([401]);
+            });
+          });
+
+          mockAxios.onPost('/todo').reply((config) => {
+            return new Promise((resolve) => {
+              if (expectedToken === config.headers.Authorization) {
+                const body = JSON.parse(config.data);
+
+                if (body && body.task) {
+                  resolve([
+                    201,
+                    {
+                      id: 1,
+                      task: body.task,
+                    },
+                  ]);
+                }
+              }
+
+              resolve([401]);
+            });
+          });
+        });
+
+        describe('when making a GET request', () => {
+          it('should return status 200', async () => {
+            const response = await api.get('/auth');
+
+            expect(response.status).toEqual(200);
+          });
+
+          it('should return message authorized', async () => {
+            const response = await api.get('/auth');
+
+            expect(response.data.message).toEqual('authorized');
+          });
+        });
+
+        describe('when making a POST request', () => {
+          it('should return status 201', async () => {
+            const response = await api.post('/todo', { task: 'test' });
+
+            expect(response.status).toEqual(201);
+          });
+
+          it('should return new task', async () => {
+            const expectedResponse = {
+              id: 1,
+              task: 'test',
+            };
+
+            const response = await api.post('/todo', { task: 'test' });
+
+            expect(response.data).toEqual(expectedResponse);
+          });
         });
       });
 
-      mockApi.onGet('/auth').reply(401);
-
-      mockApi.onPost('/todo').reply((config) => {
-        return new Promise((resolve) => {
-          if (expectedToken === config.headers.Authorization) {
-            const body = JSON.parse(config.data);
-
-            if (body && body.task) {
-              console.log('sucesso');
-
-              resolve([
-                201,
-                {
-                  id: 1,
-                  task: body.task,
-                },
-              ]);
-            }
-          }
-
-          resolve([401]);
-        });
-      });
-
-      mockAxios.onGet('/auth').reply((config) => {
-        return new Promise((resolve) => {
-          if (expectedToken === config.headers.Authorization) {
-            resolve([200, { message: 'authorized' }]);
-          }
-
-          resolve([401]);
-        });
-      });
-
-      mockAxios.onPost('/todo').reply((config) => {
-        return new Promise((resolve) => {
-          if (expectedToken === config.headers.Authorization) {
-            const body = JSON.parse(config.data);
-
-            if (body && body.task) {
-              resolve([
-                201,
-                {
-                  id: 1,
-                  task: body.task,
-                },
-              ]);
-            }
-          }
-
-          resolve([401]);
-        });
-      });
+      describe('when the refresh request fails', () => {});
     });
 
-    describe('when making a GET request', () => {
-      it('should return status 200', async () => {
-        const response = await api.get('/auth');
-
-        expect(response.status).toEqual(200);
-      });
-
-      it('should return message authorized', async () => {
-        const response = await api.get('/auth');
-
-        expect(response.data.message).toEqual('authorized');
-      });
-    });
-
-    describe('when making a POST request', () => {
-      it('should return status 201', async () => {
-        const response = await api.post('/todo', { task: 'test' });
-
-        expect(response.status).toEqual(201);
-      });
-
-      it('should return new task', async () => {
-        const expectedResponse = {
-          id: 1,
-          task: 'test',
-        };
-
-        const response = await api.post('/todo', { task: 'test' });
-
-        expect(response.data).toEqual(expectedResponse);
-      });
-    });
+    describe('when has a invalid refresh token', () => {});
   });
 
-  describe("when the token expires but doesn't have a valid refresh token", () => {});
+  describe('when the request fails', () => {});
 });
