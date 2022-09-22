@@ -16,10 +16,10 @@ describe('when requesting the API with Axios', () => {
   });
 
   describe('when the token has not expired', () => {
+    const expectedToken = 'Bearer 123456';
+
     describe('when making a GET request', () => {
       beforeAll(() => {
-        const expectedToken = 'Bearer 123456';
-
         mockApi.onGet('/auth').reply((config) => {
           return new Promise((resolve) => {
             if (expectedToken === config.headers.Authorization) {
@@ -49,39 +49,58 @@ describe('when requesting the API with Axios', () => {
       });
     });
 
-    // describe('when making a POST request', () => {
-    //   beforeAll(async () => {
-    //     api.post.mockImplementation((route, body) => {
-    //       if (route === '/todo') {
-    //         if (body && body.task) {
-    //           return Promise.resolve({
-    //             status: 201,
-    //             data: {
-    //               id: 1,
-    //               task: body.task,
-    //             },
-    //           });
-    //         }
-    //       }
-    //       return new Promise.reject();
-    //     });
-    //   });
-    //   afterAll(() => {
-    //     api.mockClear();
-    //   });
-    //   it('should return status 201', async () => {
-    //     const response = await api.post('/todo', { task: 'test' });
-    //     expect(response.status).toEqual(201);
-    //   });
-    //   it('should return new task', async () => {
-    //     const response = await api.post('/todo', { task: 'test' });
-    //     const expectedResponse = {
-    //       id: 1,
-    //       task: 'test',
-    //     };
-    //     expect(response.data).toEqual(expectedResponse);
-    //   });
-    // });
+    describe('when making a POST request', () => {
+      beforeAll(async () => {
+        mockApi.onPost('/todo').reply((config) => {
+          return new Promise((resolve) => {
+            if (expectedToken === config.headers.Authorization) {
+              const body = JSON.parse(config.data);
+
+              if (body && body.task) {
+                resolve([
+                  201,
+                  {
+                    id: 1,
+                    task: body.task,
+                  },
+                ]);
+              }
+            }
+
+            resolve(401);
+          });
+        });
+      });
+
+      it('should return status 201', async () => {
+        const response = await api.post(
+          '/todo',
+          { task: 'test' },
+          {
+            headers: { Authorization: 'Bearer 123456' },
+          },
+        );
+
+        expect(response.status).toEqual(201);
+      });
+
+      it('should return new task', async () => {
+        const expectedResponse = {
+          id: 1,
+          task: 'test',
+        };
+
+        const response = await api.post(
+          '/todo',
+          { task: 'test' },
+          {
+            headers: { Authorization: 'Bearer 123456' },
+          },
+        );
+
+        expect(response.data).toEqual(expectedResponse);
+      });
+    });
   });
 
   describe('when the token expires but has a valid refresh token', () => {
