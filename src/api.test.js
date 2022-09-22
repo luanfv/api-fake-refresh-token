@@ -121,7 +121,7 @@ describe('when requesting the API with Axios', () => {
               resolve([200, { token: '123456' }]);
             }
 
-            resolve(400);
+            resolve([400]);
           });
         });
 
@@ -131,7 +131,7 @@ describe('when requesting the API with Axios', () => {
               resolve([200, { message: 'authorized' }]);
             }
 
-            resolve(401);
+            resolve([401]);
           });
         });
       });
@@ -146,6 +146,86 @@ describe('when requesting the API with Axios', () => {
         const response = await api.get('/auth');
 
         expect(response.data.message).toEqual('authorized');
+      });
+    });
+
+    describe('when making a POST request', () => {
+      beforeAll(async () => {
+        storageRefreshToken.get.mockImplementation(() => 'abcd');
+
+        const expectedRefreshToken = storageRefreshToken.get();
+        const expectedToken = 'Bearer 123456';
+
+        mockApi.onPost('/todo').reply((config) => {
+          return new Promise((resolve) => {
+            if (expectedToken === config.headers.Authorization) {
+              const body = JSON.parse(config.data);
+
+              if (body && body.task) {
+                console.log('sucesso');
+
+                resolve([
+                  201,
+                  {
+                    id: 1,
+                    task: body.task,
+                  },
+                ]);
+              }
+            }
+
+            resolve([401]);
+          });
+        });
+
+        mockApi.onPost('/refresh-token').reply((config) => {
+          return new Promise((resolve) => {
+            const responseRefreshToken = JSON.parse(config.data).refresh_token;
+
+            if (responseRefreshToken === expectedRefreshToken) {
+              resolve([200, { token: '123456' }]);
+            }
+
+            resolve([400]);
+          });
+        });
+
+        mockAxios.onPost('/todo').reply((config) => {
+          return new Promise((resolve) => {
+            if (expectedToken === config.headers.Authorization) {
+              const body = JSON.parse(config.data);
+
+              if (body && body.task) {
+                resolve([
+                  201,
+                  {
+                    id: 1,
+                    task: body.task,
+                  },
+                ]);
+              }
+            }
+
+            resolve([401]);
+          });
+        });
+      });
+
+      it('should return status 201', async () => {
+        const response = await api.post('/todo', { task: 'test' });
+
+        expect(response.status).toEqual(201);
+      });
+
+      it('should return new task', async () => {
+        const expectedResponse = {
+          id: 1,
+          task: 'test',
+        };
+
+        const response = await api.post('/todo', { task: 'test' });
+
+        expect(response.data).toEqual(expectedResponse);
       });
     });
   });
