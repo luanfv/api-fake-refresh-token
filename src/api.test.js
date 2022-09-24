@@ -258,7 +258,63 @@ describe('when requesting with Axios', () => {
       });
     });
 
-    describe('when has a invalid refresh token', () => {});
+    describe('when has a invalid refresh token', () => {
+      beforeAll(() => {
+        mockApi.onPost('/refresh-token').reply(500);
+
+        mockAxios.onGet('/auth').reply(500);
+
+        mockAxios.onPost('/todo').reply(500);
+      });
+
+      describe('when making a GET request', () => {
+        it('should return status 401', async () => {
+          try {
+            await api.get('/auth');
+
+            expect(1).toEqual(0);
+          } catch (err) {
+            expect(err.response.status).toEqual(401);
+          }
+        });
+
+        it('should return message unauthorized', async () => {
+          const expectedResponse = { message: 'unauthorized' };
+
+          try {
+            await api.get('/auth');
+
+            expect(1).toEqual(0);
+          } catch (err) {
+            expect(err.response.data).toEqual(expectedResponse);
+          }
+        });
+      });
+
+      describe('when making a POST request', () => {
+        it('should return status 401', async () => {
+          try {
+            await api.post('/todo', { task: 'test' });
+
+            expect(1).toEqual(0);
+          } catch (err) {
+            expect(err.response.status).toEqual(401);
+          }
+        });
+
+        it('should return message unauthorized', async () => {
+          const expectedResponse = { message: 'unauthorized' };
+
+          try {
+            await api.post('/todo', { task: 'test' });
+
+            expect(1).toEqual(0);
+          } catch (err) {
+            expect(err.response.data).toEqual(expectedResponse);
+          }
+        });
+      });
+    });
   });
 
   describe('when the request fails', () => {});
