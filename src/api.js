@@ -14,13 +14,13 @@ api.interceptors.response.use(
   function (error) {
     // eslint-disable-next-line no-async-promise-executor
     return new Promise(async (resolve, reject) => {
-      if (error.response.status === 401) {
+      if (error.response && error.response.status === 401) {
         const refreshToken = storageRefreshToken.get();
 
         if (refreshToken) {
           try {
-            const refreshTokenResponse = await api.post(
-              process.env.ROUTE_POST_REFRESH_TOKEN,
+            const refreshTokenResponse = await axios.post(
+              error.config.baseURL + process.env.ROUTE_POST_REFRESH_TOKEN,
               {
                 refresh_token: refreshToken,
               },
@@ -32,7 +32,7 @@ api.interceptors.response.use(
               ? JSON.parse(error.config.data)
               : null;
 
-            const refreshResponse = await axios({
+            const refreshResponse = await axios.request({
               ...error.config,
               data: refreshRequest,
               headers: { Authorization: token },
