@@ -272,5 +272,39 @@ describe('when requesting with Axios', () => {
     });
   });
 
-  describe('when the request fails', () => {});
+  describe('when the request fails', () => {
+    beforeAll(() => {
+      mockApi.onGet('/auth').reply(500);
+    });
+
+    it('should not request refresh token', async () => {
+      try {
+        await api.get('/auth');
+
+        expect(1).toEqual(0);
+      } catch {
+        expect(axios.post).not.toHaveBeenCalled();
+      }
+    });
+
+    it('should not refresh request', async () => {
+      try {
+        await api.get('/auth');
+
+        expect(1).toEqual(0);
+      } catch {
+        expect(axios.request).not.toHaveBeenCalled();
+      }
+    });
+
+    it('should failed request', async () => {
+      try {
+        await api.get('/auth');
+
+        expect(1).toEqual(0);
+      } catch (err) {
+        expect(err.response.status).toEqual(500);
+      }
+    });
+  });
 });
