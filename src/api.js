@@ -26,13 +26,20 @@ api.interceptors.response.use(
               },
             );
 
+            // const refreshTokenResponse = await axios.post(
+            //   error.config.baseURL + process.env.ROUTE_POST_REFRESH_TOKEN,
+            //   {
+            //     refresh_token: refreshToken,
+            //   },
+            // );
+
             const token = `Bearer ${refreshTokenResponse.data.token}`;
 
             const refreshRequest = error.config.data
               ? JSON.parse(error.config.data)
               : null;
 
-            const refreshResponse = await axios({
+            const refreshResponse = await axios.request({
               ...error.config,
               data: refreshRequest,
               headers: { Authorization: token },

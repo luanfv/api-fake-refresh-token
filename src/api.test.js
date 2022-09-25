@@ -10,6 +10,18 @@ describe('when requesting with Axios', () => {
   const mockApi = new MockAdapter(api);
   const mockAxios = new MockAdapter(axios);
 
+  beforeEach(() => {
+    jest.spyOn(api, 'get');
+    jest.spyOn(api, 'post');
+    jest.spyOn(axios, 'get');
+    jest.spyOn(axios, 'post');
+    jest.spyOn(axios, 'request');
+  });
+
+  afterEach(() => {
+    jest.clearAllMocks();
+  });
+
   afterAll(() => {
     mockApi.restore();
     mockAxios.restore();
@@ -51,7 +63,21 @@ describe('when requesting with Axios', () => {
       });
     });
 
-    describe('when making a GET request', () => {
+    describe('when making a request without body', () => {
+      it('should not request refresh token', async () => {
+        await api.get('/auth');
+
+        expect(api.post).not.toBeCalledWith('/refresh-token', {
+          refresh_token: 'abcd',
+        });
+      });
+
+      it('should not refresh request', async () => {
+        await api.get('/auth');
+
+        expect(axios.request).not.toHaveBeenCalled();
+      });
+
       it('should return status 200', async () => {
         const response = await api.get('/auth');
 
@@ -66,7 +92,21 @@ describe('when requesting with Axios', () => {
       });
     });
 
-    describe('when making a POST request', () => {
+    describe('when making a request with body', () => {
+      it('should not request refresh token', async () => {
+        await api.post('/todo', { task: 'test' });
+
+        expect(api.post).not.toBeCalledWith('/refresh-token', {
+          refresh_token: 'abcd',
+        });
+      });
+
+      it('should not refresh request', async () => {
+        await api.post('/todo', { task: 'test' });
+
+        expect(axios.request).not.toHaveBeenCalled();
+      });
+
       it('should return status 201', async () => {
         const response = await api.post('/todo', { task: 'test' });
 
@@ -110,26 +150,7 @@ describe('when requesting with Axios', () => {
           });
         });
 
-        mockApi.onPost('/todo').reply((config) => {
-          return new Promise((resolve) => {
-            if (expectedToken === config.headers.Authorization) {
-              const body = JSON.parse(config.data);
-
-              if (body && body.task) {
-                resolve([
-                  201,
-                  {
-                    id: 1,
-                    task: body.task,
-                  },
-                ]);
-              }
-            }
-
-            resolve([401, { message: 'unauthorized' }]);
-          });
-        });
-
+        mockApi.onPost('/todo').reply(401, { message: 'unauthorized' });
         mockApi.onGet('/auth').reply(401, { message: 'unauthorized' });
       });
 
@@ -141,7 +162,7 @@ describe('when requesting with Axios', () => {
                 resolve([200, { message: 'authorized' }]);
               }
 
-              resolve([500]);
+              resolve([401]);
             });
           });
 
@@ -161,12 +182,26 @@ describe('when requesting with Axios', () => {
                 }
               }
 
-              resolve([500]);
+              resolve([401]);
             });
           });
         });
 
-        describe('when making a GET request', () => {
+        describe('when making a request without body', () => {
+          it('should request refresh token', async () => {
+            await api.get('/auth');
+
+            expect(api.post).toBeCalledWith('/refresh-token', {
+              refresh_token: 'abcd',
+            });
+          });
+
+          it('should refresh request', async () => {
+            await api.get('/auth');
+
+            expect(axios.request).toHaveBeenCalled();
+          });
+
           it('should return status 200', async () => {
             const response = await api.get('/auth');
 
@@ -181,7 +216,21 @@ describe('when requesting with Axios', () => {
           });
         });
 
-        describe('when making a POST request', () => {
+        describe('when making a request with body', () => {
+          it('should request refresh token', async () => {
+            await api.post('/todo', { task: 'test' });
+
+            expect(api.post).toBeCalledWith('/refresh-token', {
+              refresh_token: 'abcd',
+            });
+          });
+
+          it('should refresh request', async () => {
+            await api.post('/todo', { task: 'test' });
+
+            expect(axios.request).toHaveBeenCalled();
+          });
+
           it('should return status 201', async () => {
             const response = await api.post('/todo', { task: 'test' });
 
@@ -203,12 +252,33 @@ describe('when requesting with Axios', () => {
 
       describe('when the refresh request fails', () => {
         beforeAll(() => {
-          mockAxios.onGet('/auth').reply(500);
-
-          mockAxios.onPost('/todo').reply(500);
+          mockAxios.onGet('/auth').reply(401);
+          mockAxios.onPost('/todo').reply(401);
         });
 
-        describe('when making a GET request', () => {
+        describe('when making a request without body', () => {
+          it('should request refresh token', async () => {
+            try {
+              await api.get('/auth');
+
+              expect(1).toEqual(0);
+            } catch {
+              expect(api.post).toBeCalledWith('/refresh-token', {
+                refresh_token: 'abcd',
+              });
+            }
+          });
+
+          it('should refresh request', async () => {
+            try {
+              await api.get('/auth');
+
+              expect(1).toEqual(0);
+            } catch {
+              expect(axios.request).toHaveBeenCalled();
+            }
+          });
+
           it('should return status 401', async () => {
             try {
               await api.get('/auth');
@@ -232,7 +302,29 @@ describe('when requesting with Axios', () => {
           });
         });
 
-        describe('when making a POST request', () => {
+        describe('when making a request with body', () => {
+          it('should request refresh token', async () => {
+            try {
+              await api.post('/todo', { task: 'test' });
+
+              expect(1).toEqual(0);
+            } catch {
+              expect(api.post).toBeCalledWith('/refresh-token', {
+                refresh_token: 'abcd',
+              });
+            }
+          });
+
+          it('should refresh request', async () => {
+            try {
+              await api.post('/todo', { task: 'test' });
+
+              expect(1).toEqual(0);
+            } catch {
+              expect(axios.request).toHaveBeenCalled();
+            }
+          });
+
           it('should return status 401', async () => {
             try {
               await api.post('/todo', { task: 'test' });
@@ -259,15 +351,34 @@ describe('when requesting with Axios', () => {
     });
 
     describe('when has a invalid refresh token', () => {
-      beforeAll(() => {
+      beforeAll(async () => {
+        storageRefreshToken.get.mockImplementation(() => 'invalid');
         mockApi.onPost('/refresh-token').reply(500);
-
-        mockAxios.onGet('/auth').reply(500);
-
-        mockAxios.onPost('/todo').reply(500);
       });
 
-      describe('when making a GET request', () => {
+      describe('when making a request without body', () => {
+        it('should request refresh token', async () => {
+          try {
+            await api.get('/auth');
+
+            expect(1).toEqual(0);
+          } catch {
+            expect(api.post).toBeCalledWith('/refresh-token', {
+              refresh_token: 'invalid',
+            });
+          }
+        });
+
+        it('should not refresh request', async () => {
+          try {
+            await api.get('/auth');
+
+            expect(1).toEqual(0);
+          } catch {
+            expect(axios.request).not.toHaveBeenCalled();
+          }
+        });
+
         it('should return status 401', async () => {
           try {
             await api.get('/auth');
@@ -291,7 +402,29 @@ describe('when requesting with Axios', () => {
         });
       });
 
-      describe('when making a POST request', () => {
+      describe('when making a request with body', () => {
+        it('should request refresh token', async () => {
+          try {
+            await api.post('/todo', { task: 'test' });
+
+            expect(1).toEqual(0);
+          } catch {
+            expect(api.post).toBeCalledWith('/refresh-token', {
+              refresh_token: 'invalid',
+            });
+          }
+        });
+
+        it('should not refresh request', async () => {
+          try {
+            await api.post('/todo', { task: 'test' });
+
+            expect(1).toEqual(0);
+          } catch {
+            expect(axios.request).not.toHaveBeenCalled();
+          }
+        });
+
         it('should return status 401', async () => {
           try {
             await api.post('/todo', { task: 'test' });
