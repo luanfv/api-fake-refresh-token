@@ -6,7 +6,7 @@ import { storageRefreshToken } from './storage';
 
 jest.mock('./storage');
 
-describe('when requesting with Axios', () => {
+describe('Request interceptors', () => {
   const mockApi = new MockAdapter(api);
   const mockAxios = new MockAdapter(axios);
   const expectedToken = 'Bearer 123456';
@@ -93,28 +93,34 @@ describe('when requesting with Axios', () => {
     });
 
     describe('when making a request without body', () => {
-      it('should not request refresh token', async () => {
-        await api.get('/auth');
-
-        expect(axios.post).not.toBeCalledWith(`${baseURL}/refresh-token`, {
-          refresh_token: 'abcd',
-        });
-      });
-
-      it('should not refresh request', async () => {
-        await api.get('/auth');
-
-        expect(axios.request).not.toHaveBeenCalled();
-      });
-
       it('should successful request', async () => {
         const response = await api.get('/auth');
 
         expect(response.status).toEqual(200);
       });
+
+      it('should not request refresh token', async () => {
+        await api.get('/auth');
+
+        expect(axios.post).not.toBeCalledWith(`${baseURL}/refresh-token`, {
+          refresh_token: 'abcd',
+        });
+      });
+
+      it('should not refresh request', async () => {
+        await api.get('/auth');
+
+        expect(axios.request).not.toHaveBeenCalled();
+      });
     });
 
     describe('when making a request with body', () => {
+      it('should successful request', async () => {
+        const response = await api.post('/todo', { task: 'test' });
+
+        expect(response.status).toEqual(201);
+      });
+
       it('should not request refresh token', async () => {
         await api.post('/todo', { task: 'test' });
 
@@ -127,12 +133,6 @@ describe('when requesting with Axios', () => {
         await api.post('/todo', { task: 'test' });
 
         expect(axios.request).not.toHaveBeenCalled();
-      });
-
-      it('should successful request', async () => {
-        const response = await api.post('/todo', { task: 'test' });
-
-        expect(response.status).toEqual(201);
       });
     });
   });
@@ -146,28 +146,34 @@ describe('when requesting with Axios', () => {
 
       describe('when the refresh request is successful', () => {
         describe('when making a request without body', () => {
-          it('should request refresh token', async () => {
-            await api.get('/auth');
-
-            expect(axios.post).toBeCalledWith(`${baseURL}/refresh-token`, {
-              refresh_token: 'abcd',
-            });
-          });
-
-          it('should refresh request', async () => {
-            await api.get('/auth');
-
-            expect(axios.request).toHaveBeenCalled();
-          });
-
           it('should successful request', async () => {
             const response = await api.get('/auth');
 
             expect(response.status).toEqual(200);
           });
+
+          it('should request refresh token', async () => {
+            await api.get('/auth');
+
+            expect(axios.post).toBeCalledWith(`${baseURL}/refresh-token`, {
+              refresh_token: 'abcd',
+            });
+          });
+
+          it('should refresh request', async () => {
+            await api.get('/auth');
+
+            expect(axios.request).toHaveBeenCalled();
+          });
         });
 
         describe('when making a request with body', () => {
+          it('should successful request', async () => {
+            const response = await api.post('/todo', { task: 'test' });
+
+            expect(response.status).toEqual(201);
+          });
+
           it('should request refresh token', async () => {
             await api.post('/todo', { task: 'test' });
 
@@ -180,12 +186,6 @@ describe('when requesting with Axios', () => {
             await api.post('/todo', { task: 'test' });
 
             expect(axios.request).toHaveBeenCalled();
-          });
-
-          it('should successful request', async () => {
-            const response = await api.post('/todo', { task: 'test' });
-
-            expect(response.status).toEqual(201);
           });
         });
       });
@@ -193,6 +193,16 @@ describe('when requesting with Axios', () => {
       describe('when the refresh request fails', () => {
         beforeAll(() => {
           mockAxios.onGet(`${baseURL}/auth`).reply(500);
+        });
+
+        it('should failed request', async () => {
+          try {
+            await api.get('/auth');
+
+            expect(1).toEqual(0);
+          } catch (err) {
+            expect(err.response.status).toEqual(401);
+          }
         });
 
         it('should request refresh token', async () => {
@@ -216,16 +226,6 @@ describe('when requesting with Axios', () => {
             expect(axios.request).toHaveBeenCalled();
           }
         });
-
-        it('should failed request', async () => {
-          try {
-            await api.get('/auth');
-
-            expect(1).toEqual(0);
-          } catch (err) {
-            expect(err.response.status).toEqual(401);
-          }
-        });
       });
     });
 
@@ -236,6 +236,16 @@ describe('when requesting with Axios', () => {
 
       beforeEach(() => {
         storageRefreshToken.get.mockImplementation(() => 'invalid');
+      });
+
+      it('should failed request', async () => {
+        try {
+          await api.get('/auth');
+
+          expect(1).toEqual(0);
+        } catch (err) {
+          expect(err.response.status).toEqual(401);
+        }
       });
 
       it('should request refresh token', async () => {
@@ -259,22 +269,22 @@ describe('when requesting with Axios', () => {
           expect(axios.request).not.toHaveBeenCalled();
         }
       });
-
-      it('should failed request', async () => {
-        try {
-          await api.get('/auth');
-
-          expect(1).toEqual(0);
-        } catch (err) {
-          expect(err.response.status).toEqual(401);
-        }
-      });
     });
   });
 
   describe('when the request fails', () => {
     beforeAll(() => {
       mockApi.onGet('/auth').reply(500);
+    });
+
+    it('should failed request', async () => {
+      try {
+        await api.get('/auth');
+
+        expect(1).toEqual(0);
+      } catch (err) {
+        expect(err.response.status).toEqual(500);
+      }
     });
 
     it('should not request refresh token', async () => {
@@ -294,16 +304,6 @@ describe('when requesting with Axios', () => {
         expect(1).toEqual(0);
       } catch {
         expect(axios.request).not.toHaveBeenCalled();
-      }
-    });
-
-    it('should failed request', async () => {
-      try {
-        await api.get('/auth');
-
-        expect(1).toEqual(0);
-      } catch (err) {
-        expect(err.response.status).toEqual(500);
       }
     });
   });
