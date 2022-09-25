@@ -11,6 +11,7 @@ describe('when requesting with Axios', () => {
   const mockAxios = new MockAdapter(axios);
   const expectedToken = 'Bearer 123456';
   const expectedRefreshToken = 'abcd';
+  const baseURL = api.defaults.baseURL;
 
   beforeAll(() => {
     mockApi.onGet('/auth').reply((config) => {
@@ -33,7 +34,7 @@ describe('when requesting with Axios', () => {
       });
     });
 
-    mockApi.onPost('/refresh-token').reply((config) => {
+    mockAxios.onPost(`${baseURL}/refresh-token`).reply((config) => {
       return new Promise((resolve) => {
         const responseRefreshToken = JSON.parse(config.data).refresh_token;
 
@@ -45,7 +46,7 @@ describe('when requesting with Axios', () => {
       });
     });
 
-    mockAxios.onGet('/auth').reply((config) => {
+    mockAxios.onGet(`${baseURL}/auth`).reply((config) => {
       return new Promise((resolve) => {
         if (expectedToken === config.headers.Authorization) {
           resolve([200]);
@@ -55,14 +56,10 @@ describe('when requesting with Axios', () => {
       });
     });
 
-    mockAxios.onPost('/todo').reply((config) => {
+    mockAxios.onPost(`${baseURL}/todo`).reply((config) => {
       return new Promise((resolve) => {
         if (expectedToken === config.headers.Authorization) {
-          const body = JSON.parse(config.data);
-
-          if (body && body.task) {
-            resolve([201]);
-          }
+          resolve([201]);
         }
 
         resolve([500]);
@@ -99,7 +96,7 @@ describe('when requesting with Axios', () => {
       it('should not request refresh token', async () => {
         await api.get('/auth');
 
-        expect(api.post).not.toBeCalledWith('/refresh-token', {
+        expect(axios.post).not.toBeCalledWith(`${baseURL}/refresh-token`, {
           refresh_token: 'abcd',
         });
       });
@@ -121,7 +118,7 @@ describe('when requesting with Axios', () => {
       it('should not request refresh token', async () => {
         await api.post('/todo', { task: 'test' });
 
-        expect(api.post).not.toBeCalledWith('/refresh-token', {
+        expect(axios.post).not.toBeCalledWith(`${baseURL}/refresh-token`, {
           refresh_token: 'abcd',
         });
       });
@@ -152,7 +149,7 @@ describe('when requesting with Axios', () => {
           it('should request refresh token', async () => {
             await api.get('/auth');
 
-            expect(api.post).toBeCalledWith('/refresh-token', {
+            expect(axios.post).toBeCalledWith(`${baseURL}/refresh-token`, {
               refresh_token: 'abcd',
             });
           });
@@ -174,7 +171,7 @@ describe('when requesting with Axios', () => {
           it('should request refresh token', async () => {
             await api.post('/todo', { task: 'test' });
 
-            expect(api.post).toBeCalledWith('/refresh-token', {
+            expect(axios.post).toBeCalledWith(`${baseURL}/refresh-token`, {
               refresh_token: 'abcd',
             });
           });
@@ -195,8 +192,7 @@ describe('when requesting with Axios', () => {
 
       describe('when the refresh request fails', () => {
         beforeAll(() => {
-          mockAxios.onGet('/auth').reply(500);
-          mockAxios.onPost('/todo').reply(500);
+          mockAxios.onGet(`${baseURL}/auth`).reply(500);
         });
 
         it('should request refresh token', async () => {
@@ -205,7 +201,7 @@ describe('when requesting with Axios', () => {
 
             expect(1).toEqual(0);
           } catch {
-            expect(api.post).toBeCalledWith('/refresh-token', {
+            expect(axios.post).toBeCalledWith(`${baseURL}/refresh-token`, {
               refresh_token: 'abcd',
             });
           }
@@ -248,7 +244,7 @@ describe('when requesting with Axios', () => {
 
           expect(1).toEqual(0);
         } catch {
-          expect(api.post).toBeCalledWith('/refresh-token', {
+          expect(axios.post).toBeCalledWith(`${baseURL}/refresh-token`, {
             refresh_token: 'invalid',
           });
         }
