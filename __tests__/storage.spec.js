@@ -1,6 +1,6 @@
-import { storageRefreshToken, storageToken } from './storage';
+import { storageRefreshToken, storageToken } from '../src/storage';
 
-describe('storage', () => {
+describe('src/storage', () => {
   describe('storageRefreshToken', () => {
     it('should return refresh token', () => {
       const response = storageRefreshToken.get();

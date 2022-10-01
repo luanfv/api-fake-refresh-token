@@ -1,10 +1,10 @@
 import axios from 'axios';
 import MockAdapter from 'axios-mock-adapter';
 
-import { api } from './api';
-import { storageRefreshToken, storageToken } from './storage';
+import { api } from '../src/api';
+import { storageRefreshToken, storageToken } from '../src/storage';
 
-jest.mock('./storage');
+jest.mock('../src/storage');
 
 describe('Request interceptors', () => {
   const mockApi = new MockAdapter(api);
