@@ -1,6 +1,6 @@
 import 'dotenv/config';
 
-import { api, setApiToken } from './api';
+import { api, setApiToken } from './services/api';
 
 async function requestAuth() {
   try {

@@ -1,7 +1,7 @@
-import { storageRefreshToken, storageToken } from '../src/storage';
+import { storageRefreshToken, storageToken } from '../../src/utils/storage';
 
-describe('src/storage', () => {
-  describe('storageRefreshToken', () => {
+describe('storageRefreshToken', () => {
+  describe('get', () => {
     it('should return refresh token', () => {
       const response = storageRefreshToken.get();
       const expected = 'refresh token';
@@ -9,8 +9,10 @@ describe('src/storage', () => {
       expect(response).toEqual(expected);
     });
   });
+});
 
-  describe('storageToken', () => {
+describe('storageToken', () => {
+  describe('set', () => {
     it('should save new token', () => {
       expect(() => storageToken.set('test')).not.toThrow();
     });

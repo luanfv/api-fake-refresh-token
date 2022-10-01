@@ -7,9 +7,7 @@ const storageRefreshToken = {
 };
 
 const storageToken = {
-  set: (value) => {
-    console.log(`UPDATE STORAGE TOKEN:`, value);
-  },
+  set: (value) => value,
 };
 
 export { storageToken, storageRefreshToken };

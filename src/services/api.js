@@ -1,7 +1,7 @@
 import 'dotenv/config';
 
 import axios from 'axios';
-import { storageRefreshToken, storageToken } from './storage';
+import { storageRefreshToken, storageToken } from '../utils/storage';
 
 const ROUTE_POST_REFRESH_TOKEN = process.env.ROUTE_POST_REFRESH_TOKEN;
 const BASE_URL = `${process.env.BASE_URL}:${process.env.PORT}`;
