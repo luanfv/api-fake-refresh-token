@@ -2,7 +2,7 @@ import axios from 'axios';
 import MockAdapter from 'axios-mock-adapter';
 
 import { api } from './api';
-import { storageRefreshToken } from './storage';
+import { storageRefreshToken, storageToken } from './storage';
 
 jest.mock('./storage');
 
@@ -99,6 +99,18 @@ describe('Request interceptors', () => {
         expect(response.status).toEqual(200);
       });
 
+      it('should not request storageToken.set', async () => {
+        await api.get('/auth');
+
+        expect(storageToken.set).not.toBeCalled();
+      });
+
+      it('should not request storageRefreshToken.get', async () => {
+        await api.get('/auth');
+
+        expect(storageRefreshToken.get).not.toBeCalled();
+      });
+
       it('should not request refresh token', async () => {
         await api.get('/auth');
 
@@ -119,6 +131,18 @@ describe('Request interceptors', () => {
         const response = await api.post('/todo', { task: 'test' });
 
         expect(response.status).toEqual(201);
+      });
+
+      it('should not request storageToken.set', async () => {
+        await api.post('/todo', { task: 'test' });
+
+        expect(storageToken.set).not.toBeCalled();
+      });
+
+      it('should not request storageRefreshToken.get', async () => {
+        await api.post('/todo', { task: 'test' });
+
+        expect(storageRefreshToken.get).not.toBeCalled();
       });
 
       it('should not request refresh token', async () => {
@@ -152,6 +176,18 @@ describe('Request interceptors', () => {
             expect(response.status).toEqual(200);
           });
 
+          it('should pass "Bearer 123456" to storageToken.set', async () => {
+            await api.get('/auth');
+
+            expect(storageToken.set).toBeCalledWith('Bearer 123456');
+          });
+
+          it('should request storageRefreshToken.get', async () => {
+            await api.get('/auth');
+
+            expect(storageRefreshToken.get).toBeCalled();
+          });
+
           it('should request refresh token', async () => {
             await api.get('/auth');
 
@@ -174,6 +210,18 @@ describe('Request interceptors', () => {
             expect(response.status).toEqual(201);
           });
 
+          it('should pass "Bearer 123456" to storageToken.set', async () => {
+            await api.get('/auth');
+
+            expect(storageToken.set).toBeCalledWith('Bearer 123456');
+          });
+
+          it('should request storageRefreshToken.get', async () => {
+            await api.get('/auth');
+
+            expect(storageRefreshToken.get).toBeCalled();
+          });
+
           it('should request refresh token', async () => {
             await api.post('/todo', { task: 'test' });
 
@@ -192,7 +240,7 @@ describe('Request interceptors', () => {
 
       describe('when the refresh request fails', () => {
         beforeAll(() => {
-          mockAxios.onGet(`${baseURL}/auth`).reply(500);
+          mockAxios.onGet(`${baseURL}/auth`).reply(401);
         });
 
         it('should failed request', async () => {
@@ -202,6 +250,26 @@ describe('Request interceptors', () => {
             expect(1).toEqual(0);
           } catch (err) {
             expect(err.response.status).toEqual(401);
+          }
+        });
+
+        it('should pass null to storageToken.set', async () => {
+          try {
+            await api.get('/auth');
+
+            expect(1).toEqual(0);
+          } catch (err) {
+            expect(storageToken.set).toBeCalledWith(null);
+          }
+        });
+
+        it('should request storageRefreshToken.get', async () => {
+          try {
+            await api.get('/auth');
+
+            expect(1).toEqual(0);
+          } catch (err) {
+            expect(storageRefreshToken.get).toBeCalled();
           }
         });
 
@@ -248,6 +316,26 @@ describe('Request interceptors', () => {
         }
       });
 
+      it('should pass null to storageToken.set', async () => {
+        try {
+          await api.get('/auth');
+
+          expect(1).toEqual(0);
+        } catch {
+          expect(storageToken.set).toBeCalledWith(null);
+        }
+      });
+
+      it('should request storageRefreshToken.get', async () => {
+        try {
+          await api.get('/auth');
+
+          expect(1).toEqual(0);
+        } catch {
+          expect(storageRefreshToken.get).toBeCalled();
+        }
+      });
+
       it('should request refresh token', async () => {
         try {
           await api.get('/auth');
@@ -284,6 +372,26 @@ describe('Request interceptors', () => {
         expect(1).toEqual(0);
       } catch (err) {
         expect(err.response.status).toEqual(500);
+      }
+    });
+
+    it('should not request storageToken.set', async () => {
+      try {
+        await api.get('/auth');
+
+        expect(1).toEqual(0);
+      } catch (err) {
+        expect(storageToken.set).not.toBeCalled();
+      }
+    });
+
+    it('should not request storageRefreshToken.get', async () => {
+      try {
+        await api.get('/auth');
+
+        expect(1).toEqual(0);
+      } catch (err) {
+        expect(storageRefreshToken.get).not.toBeCalled();
       }
     });
 
