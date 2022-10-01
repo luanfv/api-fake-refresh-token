@@ -3,8 +3,11 @@ import 'dotenv/config';
 import axios from 'axios';
 import { storageRefreshToken, storageToken } from './storage';
 
+const ROUTE_POST_REFRESH_TOKEN = process.env.ROUTE_POST_REFRESH_TOKEN;
+const BASE_URL = `${process.env.BASE_URL}:${process.env.PORT}`;
+
 const api = axios.create({
-  baseURL: `${process.env.BASE_URL}:${process.env.PORT}`,
+  baseURL: BASE_URL,
 });
 
 api.interceptors.response.use(
@@ -20,7 +23,7 @@ api.interceptors.response.use(
         if (refreshToken) {
           try {
             const refreshTokenResponse = await axios.post(
-              error.config.baseURL + process.env.ROUTE_POST_REFRESH_TOKEN,
+              error.config.baseURL + ROUTE_POST_REFRESH_TOKEN,
               {
                 refresh_token: refreshToken,
               },
