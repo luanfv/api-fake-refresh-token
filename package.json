@@ -6,7 +6,8 @@
   "scripts": {
     "server": "nodemon --exec sucrase-node ./src/server.js",
     "request": "sucrase-node ./src/request.js",
-    "test": "jest"
+    "test": "jest",
+    "test:cov": "npm run test -- --coverage"
   },
   "author": "luanfv",
   "license": "ISC",
