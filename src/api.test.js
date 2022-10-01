@@ -138,12 +138,12 @@ describe('Request interceptors', () => {
   });
 
   describe('when the token expires or is invalid', () => {
-    describe('when has a valid refresh token', () => {
-      beforeAll(() => {
-        mockApi.onPost('/todo').reply(401);
-        mockApi.onGet('/auth').reply(401);
-      });
+    beforeAll(() => {
+      mockApi.onPost('/todo').reply(401);
+      mockApi.onGet('/auth').reply(401);
+    });
 
+    describe('when has a valid refresh token', () => {
       describe('when the refresh request is successful', () => {
         describe('when making a request without body', () => {
           it('should successful request', async () => {
@@ -231,7 +231,7 @@ describe('Request interceptors', () => {
 
     describe('when has a invalid refresh token', () => {
       beforeAll(() => {
-        mockApi.onPost('/refresh-token').reply(500);
+        mockAxios.onPost(`${baseURL}/refresh-token`).reply(401);
       });
 
       beforeEach(() => {
