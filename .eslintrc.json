@@ -16,6 +16,7 @@
     "prettier"
   ],
   "rules": {
-    "prettier/prettier": "error"
+    "prettier/prettier": "error",
+    "no-async-promise-executor": false
   }
 }

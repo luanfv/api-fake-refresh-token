@@ -15,46 +15,61 @@ api.interceptors.response.use(
     return response;
   },
   function (error) {
-    // eslint-disable-next-line no-async-promise-executor
     return new Promise(async (resolve, reject) => {
-      if (error.response && error.response.status === 401) {
-        const refreshToken = storageRefreshToken.get();
+      switch (error.response.status) {
+        case 401:
+          const refreshToken = storageRefreshToken.get();
 
-        if (refreshToken) {
-          try {
-            const refreshTokenResponse = await axios.post(
-              error.config.baseURL + ROUTE_POST_REFRESH_TOKEN,
-              {
-                refresh_token: refreshToken,
-              },
-            );
+          if (refreshToken) {
+            try {
+              const { token, response } = await refreshRequest(
+                error.config,
+                refreshToken,
+              );
 
-            const token = `Bearer ${refreshTokenResponse.data.token}`;
-
-            const refreshRequest = error.config.data
-              ? JSON.parse(error.config.data)
-              : null;
-
-            const refreshResponse = await axios.request({
-              ...error.config,
-              data: refreshRequest,
-              headers: { Authorization: token },
-            });
-
-            setApiToken(token);
-            resolve(refreshResponse);
-          } catch (err) {
-            if (err.response.status === 401) {
-              setApiToken(null);
+              setApiToken(token);
+              resolve(response);
+            } catch (err) {
+              if (err.response.status === 401) {
+                setApiToken(null);
+              }
             }
           }
-        }
+
+          break;
+
+        default:
+          break;
       }
 
       reject(error);
     });
   },
 );
+
+async function refreshRequest(requestConfig, refreshToken) {
+  const refreshTokenResponse = await axios.post(
+    requestConfig.baseURL + ROUTE_POST_REFRESH_TOKEN,
+    {
+      refresh_token: refreshToken,
+    },
+  );
+
+  const token = `Bearer ${refreshTokenResponse.data.token}`;
+
+  const data = requestConfig.data ? JSON.parse(requestConfig.data) : null;
+
+  const refreshResponse = await axios.request({
+    ...requestConfig,
+    data,
+    headers: { Authorization: token },
+  });
+
+  return {
+    token,
+    response: refreshResponse,
+  };
+}
 
 function setApiToken(value) {
   api.defaults.headers.common.Authorization = value;
