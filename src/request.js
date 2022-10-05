@@ -20,7 +20,7 @@ async function requestAuth() {
 async function requestTODO() {
   try {
     const responseWithoutToken = await api.post(process.env.ROUTE_POST_TODO, {
-      task: 'teste 1',
+      task: 'test 1',
     });
     console.log(
       'Create TODO without valid token and with valid refresh token:',
@@ -28,7 +28,7 @@ async function requestTODO() {
     );
 
     const responseWithToken = await api.post(process.env.ROUTE_POST_TODO, {
-      task: 'teste 2',
+      task: 'test 2',
     });
     console.log('Create TODO with valid token:', responseWithToken.data);
   } catch (err) {
@@ -36,12 +36,10 @@ async function requestTODO() {
   }
 }
 
-async function main() {
+(async () => {
   setApiToken(null);
   await requestAuth();
 
   setApiToken(null);
   await requestTODO();
-}
-
-main();
+})();

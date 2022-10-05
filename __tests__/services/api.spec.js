@@ -75,7 +75,6 @@ describe('Request interceptors e2e', () => {
   beforeEach(() => {
     jest.spyOn(api, 'get');
     jest.spyOn(api, 'post');
-    jest.spyOn(axios, 'get');
     jest.spyOn(axios, 'post');
     jest.spyOn(axios, 'request');
 
