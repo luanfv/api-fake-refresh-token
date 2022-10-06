@@ -1,9 +1,10 @@
 import 'dotenv/config';
 
 import axios from 'axios';
-import { storageRefreshToken, storageToken } from '../utils/storage';
 
-const ROUTE_POST_REFRESH_TOKEN = process.env.ROUTE_POST_REFRESH_TOKEN;
+import { storageRefreshToken, storageToken } from '../utils/storage';
+import { refreshRequest } from '../utils/request';
+
 const BASE_URL = `${process.env.BASE_URL}:${process.env.PORT}`;
 
 const api = axios.create({
@@ -46,30 +47,6 @@ api.interceptors.response.use(
     });
   },
 );
-
-async function refreshRequest(requestConfig, refreshToken) {
-  const refreshTokenResponse = await axios.post(
-    requestConfig.baseURL + ROUTE_POST_REFRESH_TOKEN,
-    {
-      refresh_token: refreshToken,
-    },
-  );
-
-  const token = `Bearer ${refreshTokenResponse.data.token}`;
-
-  const data = requestConfig.data ? JSON.parse(requestConfig.data) : null;
-
-  const refreshResponse = await axios.request({
-    ...requestConfig,
-    data,
-    headers: { Authorization: token },
-  });
-
-  return {
-    token,
-    response: refreshResponse,
-  };
-}
 
 function setApiToken(value) {
   api.defaults.headers.common.Authorization = value;
